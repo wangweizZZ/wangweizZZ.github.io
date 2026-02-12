@@ -1,0 +1,44 @@
+name: Hexo Next Auto Deploy
+
+# 触发条件：推代码到main分支时执行
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 步骤1：拉取main分支源码
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 拉取完整历史，避免主题依赖报错
+
+      # 步骤2：设置Node.js环境
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'  # 缓存依赖，加速构建
+
+      # 步骤3：安装Hexo和依赖（含Next主题）
+      - name: Install Dependencies
+        run: |
+          npm install -g hexo-cli
+          npm install  # 自动安装hexo-theme-next
+
+      # 步骤4：清理并编译静态文件
+      - name: Generate Static Files
+        run: hexo clean && hexo generate
+
+      # 步骤5：部署到gh-pages分支
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
